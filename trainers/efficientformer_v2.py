@@ -35,7 +35,7 @@ from orchestration.train_env import (
     save_latest_checkpoint,
 )
 
-# Configuration constants (could be moved to a config file).
+# 配置常量（可以移动到配置文件）
 DATA_ROOT: Path = Path.home() / "code" / "DeepfakeDetection" / "data" / "Dataset"
 MODEL_NAME: str = "efficientformerv2_s1"
 DEFAULT_EPOCHS: int = 5
@@ -48,7 +48,7 @@ BEST_WEIGHTS_NAME: str = "EfficientFormerV2_S1.pth"
 BEST_CKPT_NAME: str = "best.ckpt"
 LATEST_CKPT_NAME: str = "latest.ckpt"
 
-# Parameter name substrings to unfreeze after the head-only warmup.
+# 仅在头部预热后要解冻的参数名称子字符串
 UNFREEZE_KEYS: tuple[str, ...] = (
     "stages.3",
     "blocks.3",
@@ -64,7 +64,7 @@ console = create_console()
 
 
 def _ensure_rgb(image: Image.Image) -> Image.Image:
-    """Convert grayscale frames to RGB for ImageNet-pretrained backbones."""
+    """将灰度图像转换为 RGB，用于 ImageNet 预训练骨干网络。"""
 
     if getattr(image, "mode", "RGB") != "RGB":
         return image.convert("RGB")  # type: ignore[no-any-return]
@@ -81,7 +81,7 @@ def get_loaders(
     *,
     expected_classes: int | None = None,
 ) -> tuple[DataLoader, DataLoader]:
-    """Build train/validation loaders with light augmentations on train."""
+    """构建训练/验证数据加载器，训练集使用轻度数据增强。"""
     normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     small_images = img_size <= 64
 
@@ -190,7 +190,7 @@ def get_loaders(
 
 
 def evaluate(model: nn.Module, dl: DataLoader, device: str) -> float:
-    """Compute top-1 accuracy on the given dataloader."""
+    """计算给定数据加载器的 top-1 准确率。"""
     model.eval()
     correct = 0
     total = 0
@@ -217,7 +217,7 @@ def train_one_epoch(  # noqa: PLR0913
     progress: Progress,
     task: TaskID,
 ) -> None:
-    """Single-epoch training loop with AMP and live throughput reporting."""
+    """单轮训练循环，包含 AMP 和实时吞吐量报告。"""
     model.train()
     start = perf_counter()
     for i, (batch_x, batch_y) in enumerate(dl, 1):
@@ -232,7 +232,7 @@ def train_one_epoch(  # noqa: PLR0913
         scaler.step(opt)
         scaler.update()
 
-        # Report instantaneous images/sec and loss on the progress bar.
+        # 在进度条上报告瞬时每秒图像数和损失
         elapsed = perf_counter() - start
         seen = min(i * dl.batch_size, len(dl.dataset))
         ips = seen / max(1e-6, elapsed)
@@ -244,7 +244,7 @@ def train_one_epoch(  # noqa: PLR0913
 
 
 def main() -> None:  # noqa: PLR0915
-    """Entrypoint: device setup, data, warmup, fine-tune, save weights."""
+    """入口函数：设备设置、数据、预热、微调、保存权重。"""
     env = prepare_training_environment(
         weights_name=BEST_WEIGHTS_NAME,
         best_checkpoint_name=BEST_CKPT_NAME,
@@ -300,9 +300,9 @@ def main() -> None:  # noqa: PLR0915
             "[bold red]Class configuration mismatch[/]",
             f"→ {exc}",
         )
-        console.print(
-            "Update `data.num_classes` in your YAML to match the dataset. "
-            "For MNIST, set it to 10.",
+            console.print(
+            "更新 YAML 中的 `data.num_classes` 以匹配数据集。"
+            "对于 MNIST，将其设置为 10。",
         )
         raise SystemExit(1) from exc
     console.print(

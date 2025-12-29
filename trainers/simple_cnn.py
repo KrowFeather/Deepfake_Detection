@@ -42,14 +42,14 @@ DEFAULT_BATCH_SIZE: int = 64
 DEFAULT_IMG_SIZE: int = 224
 DEFAULT_NUM_WORKERS: int = 4
 
-# Learning rate and weight decay
+# 学习率和权重衰减
 LR: float = 1e-3
 WD: float = 1e-4
 
-# Early stopping
+# 早停
 DEFAULT_PATIENCE: int = 10
 
-# Output filenames
+# 输出文件名
 BEST_WEIGHTS_NAME: str = "SimpleCNNModel.pth"
 BEST_CKPT_NAME: str = "best.ckpt"
 LATEST_CKPT_NAME: str = "latest.ckpt"
@@ -60,7 +60,7 @@ console = create_console()
 
 
 def _ensure_rgb(image: Image.Image) -> Image.Image:
-    """Convert grayscale frames to RGB."""
+    """将灰度图像转换为 RGB。"""
     if getattr(image, "mode", "RGB") != "RGB":
         return image.convert("RGB")
     return image
@@ -68,7 +68,7 @@ def _ensure_rgb(image: Image.Image) -> Image.Image:
 
 @dataclass(frozen=True)
 class EvalResult:
-    """Container for evaluation metrics."""
+    """评估指标容器。"""
 
     acc: float
     loss: float
@@ -77,46 +77,111 @@ class EvalResult:
 
 
 class SimpleCNN(nn.Module):
-    """Simple CNN architecture for binary classification."""
+    """用于二分类的简单 CNN 架构。
+    
+    该网络采用经典的卷积神经网络设计，包含四个卷积块用于特征提取，
+    然后通过全局平均池化和全连接层进行分类。
+    
+    架构特点：
+    - 逐层增加通道数（32 -> 64 -> 128 -> 256），提取更复杂的特征
+    - 每个卷积块后使用最大池化进行下采样，减少计算量
+    - 使用批归一化加速训练并提高稳定性
+    - 分类器使用 Dropout 防止过拟合
+    
+    输入输出：
+    - 输入：形状为 (B, 3, H, W) 的图像张量，其中 B 是批次大小，H 和 W 是图像高度和宽度
+    - 输出：形状为 (B, num_classes) 的 logits 张量
+    """
 
     def __init__(self, num_classes: int = 2) -> None:
+        """初始化 SimpleCNN 模型。
+        
+        参数:
+            num_classes: 分类类别数，默认为 2（二分类任务）
+        """
         super().__init__()
+        
+        # 特征提取层：四个卷积块，逐层提取更高级的特征
         self.features = nn.Sequential(
-            # First block
+            # 第一个卷积块：从 RGB 输入提取基础特征
+            # 输入: (B, 3, H, W) -> 输出: (B, 32, H/2, W/2)
+            # Conv2d: 3 通道输入 -> 32 通道输出，3x3 卷积核，padding=1 保持空间尺寸
             nn.Conv2d(3, 32, kernel_size=3, padding=1),
+            # 批归一化：对 32 个通道进行归一化，加速训练并提高稳定性
             nn.BatchNorm2d(32),
+            # ReLU 激活函数：引入非线性，inplace=True 节省内存
             nn.ReLU(inplace=True),
+            # 最大池化：2x2 窗口，步长 2，将空间尺寸减半 (H, W) -> (H/2, W/2)
             nn.MaxPool2d(2, 2),
-            # Second block
+            
+            # 第二个卷积块：提取中级特征
+            # 输入: (B, 32, H/2, W/2) -> 输出: (B, 64, H/4, W/4)
+            # 通道数翻倍，提取更复杂的特征模式
             nn.Conv2d(32, 64, kernel_size=3, padding=1),
             nn.BatchNorm2d(64),
             nn.ReLU(inplace=True),
             nn.MaxPool2d(2, 2),
-            # Third block
+            
+            # 第三个卷积块：提取高级特征
+            # 输入: (B, 64, H/4, W/4) -> 输出: (B, 128, H/8, W/8)
+            # 进一步增加通道数，捕获更抽象的特征
             nn.Conv2d(64, 128, kernel_size=3, padding=1),
             nn.BatchNorm2d(128),
             nn.ReLU(inplace=True),
             nn.MaxPool2d(2, 2),
-            # Fourth block
+            
+            # 第四个卷积块：提取深层特征
+            # 输入: (B, 128, H/8, W/8) -> 输出: (B, 256, H/16, W/16)
+            # 最高通道数，提取最抽象的特征表示
             nn.Conv2d(128, 256, kernel_size=3, padding=1),
             nn.BatchNorm2d(256),
             nn.ReLU(inplace=True),
             nn.MaxPool2d(2, 2),
         )
+        
+        # 全局平均池化：将特征图池化为 1x1，输出 (B, 256, 1, 1)
+        # AdaptiveAvgPool2d 可以处理任意输入尺寸，输出固定尺寸
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
+        
+        # 分类器：将特征向量映射到类别 logits
         self.classifier = nn.Sequential(
+            # Dropout: 训练时以 0.5 的概率随机丢弃神经元，防止过拟合
             nn.Dropout(0.5),
+            # 第一个全连接层：256 维特征 -> 128 维隐藏层
             nn.Linear(256, 128),
+            # ReLU 激活函数
             nn.ReLU(inplace=True),
+            # 再次 Dropout，进一步正则化
             nn.Dropout(0.5),
+            # 第二个全连接层：128 维 -> num_classes 维，输出类别 logits
             nn.Linear(128, num_classes),
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """前向传播。
+        
+        参数:
+            x: 输入图像张量，形状为 (B, 3, H, W)
+            
+        返回:
+            输出 logits 张量，形状为 (B, num_classes)
+        """
+        # 步骤 1: 通过特征提取层，提取多尺度特征
+        # (B, 3, H, W) -> (B, 256, H/16, W/16)
         x = self.features(x)
+        
+        # 步骤 2: 全局平均池化，将空间维度压缩为 1x1
+        # (B, 256, H/16, W/16) -> (B, 256, 1, 1)
         x = self.avgpool(x)
+        
+        # 步骤 3: 展平特征图，将 (B, 256, 1, 1) 展平为 (B, 256)
+        # 从第 1 维开始展平（保留批次维度）
         x = torch.flatten(x, 1)
+        
+        # 步骤 4: 通过分类器，将特征向量映射到类别 logits
+        # (B, 256) -> (B, num_classes)
         x = self.classifier(x)
+        
         return x
 
 
@@ -130,7 +195,7 @@ def get_loaders(
     *,
     expected_classes: int | None = None,
 ) -> tuple[DataLoader, DataLoader]:
-    """Build train/validation loaders."""
+    """构建训练/验证数据加载器。"""
     normalize = transforms.Normalize(
         mean=[0.485, 0.456, 0.406],
         std=[0.229, 0.224, 0.225],
@@ -217,7 +282,7 @@ def evaluate(
     device: str,
     criterion: nn.Module,
 ) -> EvalResult:
-    """Compute top-1 accuracy and mean loss."""
+    """计算 top-1 准确率和平均损失。"""
     model.eval()
     correct = 0
     total = 0
@@ -249,7 +314,7 @@ def train_one_epoch(
     progress: Progress,
     task: TaskID,
 ) -> float:
-    """Single-epoch training loop."""
+    """单轮训练循环。"""
     model.train()
     start = perf_counter()
     opt.zero_grad(set_to_none=True)
@@ -287,7 +352,7 @@ def train_one_epoch(
 
 
 def main() -> None:
-    """Entrypoint: data, model, training loop, early stop, save best."""
+    """入口函数：数据、模型、训练循环、早停、保存最佳模型。"""
     env = prepare_training_environment(
         weights_name=BEST_WEIGHTS_NAME,
         best_checkpoint_name=BEST_CKPT_NAME,

@@ -38,26 +38,26 @@ from orchestration.train_env import (
 
 # ---------------------------- Config --------------------------------- #
 
-# Adjust for your environment if needed.
+# 根据需要调整环境配置
 DATA_ROOT: Path = Path.home() / "code" / "DeepfakeDetection" / "data" / "Dataset"
 MODEL_NAME: str = "faster_vit_2_224"
 
-# Training hyperparameters.
+# 训练超参数
 DEFAULT_EPOCHS: int = 25
 DEFAULT_BATCH_SIZE: int = 64
 DEFAULT_IMG_SIZE: int = 224
 DEFAULT_NUM_WORKERS: int = 8
 
-# LRs/WDs for the two phases.
+# 两个阶段的学习率/权重衰减
 HEAD_LR: float = 3e-4
 HEAD_WD: float = 5e-2
 FT_LR: float = 1e-4
 FT_WD: float = 5e-2
 
-# Early stopping by Validation accuracy.
-DEFAULT_PATIENCE: int = 4  # epochs without improvement
+# 基于验证准确率的早停
+DEFAULT_PATIENCE: int = 4  # 无改进的轮数
 
-# Output filenames (paths resolved at runtime via :mod:`train_env`).
+# 输出文件名（路径在运行时通过 :mod:`train_env` 解析）
 BEST_WEIGHTS_NAME: str = "FasterVitModel.pth"
 BEST_CKPT_NAME: str = "best.ckpt"
 LATEST_CKPT_NAME: str = "latest.ckpt"
@@ -68,7 +68,7 @@ console = create_console()
 
 
 def _ensure_rgb(image: Image.Image) -> Image.Image:
-    """Convert grayscale inputs to RGB to match ImageNet pretraining."""
+    """将灰度输入转换为 RGB 以匹配 ImageNet 预训练。"""
 
     if getattr(image, "mode", "RGB") != "RGB":
         return image.convert("RGB")  # type: ignore[no-any-return]
@@ -77,7 +77,7 @@ def _ensure_rgb(image: Image.Image) -> Image.Image:
 
 @dataclass(frozen=True)
 class EvalResult:
-    """Simple container for evaluation metrics."""
+    """评估指标容器。"""
 
     acc: float
     total: int
@@ -94,7 +94,7 @@ def get_loaders(
     *,
     expected_classes: int | None = None,
 ) -> tuple[DataLoader, DataLoader]:
-    """Build train/validation loaders. FasterViT expects ImageNet norm."""
+    """构建训练/验证数据加载器。FasterViT 期望使用 ImageNet 归一化。"""
     normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     small_images = img_size <= 64
 
@@ -203,7 +203,7 @@ def get_loaders(
 
 
 def evaluate(model: nn.Module, dl: DataLoader, device: str) -> EvalResult:
-    """Compute top-1 accuracy."""
+    """计算 top-1 准确率。"""
     model.eval()
     correct = 0
     total = 0
@@ -234,13 +234,13 @@ def train_one_epoch(  # noqa: PLR0913
     task: TaskID,
     accum_steps: int = 1,
 ) -> None:
-    """Single-epoch training loop with AMP and live throughput reporting."""
+    """单轮训练循环，包含 AMP 和实时吞吐量报告。"""
     model.train()
     start = perf_counter()
     opt.zero_grad(set_to_none=True)
 
-    # Track whether we have pending grads at the end (for non-divisible steps)
-    pending_steps = 0
+        # 跟踪是否有待处理的梯度（用于不可整除的步数）
+        pending_steps = 0
 
     for i, (batch_x, batch_y) in enumerate(dl, 1):
         inputs = batch_x.to(device, non_blocking=True).to(
@@ -259,11 +259,11 @@ def train_one_epoch(  # noqa: PLR0913
 
         if pending_steps == accum_steps:
             scaler.step(opt)
-            scaler.update()
-            opt.zero_grad(set_to_none=True)
-            pending_steps = 0
+        scaler.update()
+        opt.zero_grad(set_to_none=True)
+        pending_steps = 0
 
-        # Progress bar: show loss (unscaled) and images/sec
+        # 进度条：显示损失（未缩放）和每秒图像数
         elapsed = perf_counter() - start
         seen = min(i * dl.batch_size, len(dl.dataset))
         ips = seen / max(1e-6, elapsed)
@@ -282,7 +282,7 @@ def train_one_epoch(  # noqa: PLR0913
 
 
 def main() -> None:  # noqa: PLR0915
-    """Entrypoint: data, model, warmup, fine-tune, early stop, save best."""
+    """入口函数：数据、模型、预热、微调、早停、保存最佳模型。"""
     env = prepare_training_environment(
         weights_name=BEST_WEIGHTS_NAME,
         best_checkpoint_name=BEST_CKPT_NAME,
@@ -386,11 +386,11 @@ def main() -> None:  # noqa: PLR0915
             warm_opt = optim.AdamW(head_params, lr=HEAD_LR, weight_decay=HEAD_WD)
 
             warm_task = progress.add_task(
-                "warmup (head only)",
+                "预热（仅头部）",
                 total=len(train_dl),
                 extra="",
             )
-            console.print("[bold]Warmup (head only)[/]")
+            console.print("[bold]预热（仅头部）[/]")
             train_one_epoch(
                 model=model,
                 dl=train_dl,
@@ -419,8 +419,8 @@ def main() -> None:  # noqa: PLR0915
         effective_batch = 128
         accum_steps_ft = max(1, effective_batch // ft_batch_size)
         console.print(
-            f"[bold]Fine-tune[/]: bs={ft_batch_size}, accum_steps={accum_steps_ft} "
-            f"(effective ≈ {ft_batch_size * accum_steps_ft})",
+            f"[bold]微调[/]: bs={ft_batch_size}, accum_steps={accum_steps_ft} "
+            f"(有效批次大小 ≈ {ft_batch_size * accum_steps_ft})",
         )
 
         train_dl_ft = DataLoader(

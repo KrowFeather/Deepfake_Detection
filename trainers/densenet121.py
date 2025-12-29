@@ -291,7 +291,7 @@ console = create_console()
 
 
 def _ensure_rgb(image: Image.Image) -> Image.Image:
-    """Convert grayscale frames to RGB."""
+    """将灰度图像转换为 RGB。"""
     if getattr(image, "mode", "RGB") != "RGB":
         return image.convert("RGB")
     return image
@@ -299,7 +299,7 @@ def _ensure_rgb(image: Image.Image) -> Image.Image:
 
 @dataclass(frozen=True)
 class EvalResult:
-    """Container for evaluation metrics."""
+    """评估指标容器。"""
 
     acc: float
     loss: float
@@ -317,7 +317,7 @@ def get_loaders(
     *,
     expected_classes: int | None = None,
 ) -> tuple[DataLoader, DataLoader]:
-    """Build train/validation loaders."""
+    """构建训练/验证数据加载器。"""
     normalize = transforms.Normalize(
         mean=[0.485, 0.456, 0.406],
         std=[0.229, 0.224, 0.225],
@@ -404,7 +404,7 @@ def evaluate(
     device: str,
     criterion: nn.Module,
 ) -> EvalResult:
-    """Compute top-1 accuracy and mean loss."""
+    """计算 top-1 准确率和平均损失。"""
     model.eval()
     correct = 0
     total = 0
@@ -436,7 +436,7 @@ def train_one_epoch(
     progress: Progress,
     task: TaskID,
 ) -> float:
-    """Single-epoch training loop."""
+    """单轮训练循环。"""
     model.train()
     start = perf_counter()
     opt.zero_grad(set_to_none=True)
@@ -474,7 +474,7 @@ def train_one_epoch(
 
 
 def main() -> None:
-    """Entrypoint: data, model, training loop, early stop, save best."""
+    """入口函数：数据、模型、训练循环、早停、保存最佳模型。"""
     env = prepare_training_environment(
         weights_name=BEST_WEIGHTS_NAME,
         best_checkpoint_name=BEST_CKPT_NAME,
