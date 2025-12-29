@@ -1,0 +1,72 @@
+seed: 1
+device: cuda:7
+
+data:
+  root: /home/tjj/nas/dataset/biggan/data_big
+  train_split: train
+  val_split: val
+  num_classes: 2
+  img_size: 224
+
+models:
+  efficientnet_from_scratch:
+    output_dir: runs/efficientnet_from_scratch
+    transforms:
+      train:
+        ensure_rgb: true
+        train_random_resized_crop: true
+        train_random_horizontal_flip: true
+        train_random_rotation: true
+        train_color_jitter: true
+        train_random_erasing: true
+      eval:
+        ensure_rgb: true
+        val_resize: true
+        val_center_crop: true
+    training:
+      epochs: 50
+      batch_size: 64
+      num_workers: 4
+      resume: auto
+
+  efficientformer_v2_from_scratch:
+    output_dir: runs/efficientformer_v2_from_scratch
+    transforms:
+      train:
+        ensure_rgb: true
+        train_random_resized_crop: true
+        train_random_horizontal_flip: true
+        train_color_jitter: true
+      eval:
+        ensure_rgb: true
+        val_resize: true
+        val_center_crop: true
+    training:
+      epochs: 50
+      batch_size: 128
+      num_workers: 8
+      resume: auto
+
+  fastervit_from_scratch:
+    output_dir: runs/fastervit_from_scratch
+    transforms:
+      train:
+        ensure_rgb: true
+        train_random_resized_crop: true
+        train_random_horizontal_flip: true
+        train_color_jitter: true
+      eval:
+        ensure_rgb: true
+        val_resize: true
+        val_center_crop: true
+    training:
+      epochs: 50
+      batch_size: 64
+      num_workers: 8
+      resume: auto
+
+selection:
+  - efficientnet_from_scratch
+  - efficientformer_v2_from_scratch
+  - fastervit_from_scratch
+

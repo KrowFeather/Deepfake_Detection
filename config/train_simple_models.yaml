@@ -1,0 +1,108 @@
+seed: 1
+device: cuda:7
+
+data:
+  root: /home/tjj/nas/dataset/biggan/data_big
+  train_split: train
+  val_split: val
+  num_classes: 2
+  img_size: 224
+
+models:
+  simple_cnn:
+    output_dir: runs/simple_cnn
+    transforms:
+      train:
+        ensure_rgb: true
+        train_random_resized_crop: true
+        train_random_horizontal_flip: true
+        train_color_jitter: true
+      eval:
+        ensure_rgb: true
+        val_resize: true
+        val_center_crop: true
+    training:
+      epochs: 50
+      batch_size: 64
+      num_workers: 4
+      resume: auto
+
+  resnet18:
+    output_dir: runs/resnet18
+    transforms:
+      train:
+        ensure_rgb: true
+        train_random_resized_crop: true
+        train_random_horizontal_flip: true
+        train_color_jitter: true
+      eval:
+        ensure_rgb: true
+        val_resize: true
+        val_center_crop: true
+    training:
+      epochs: 50
+      batch_size: 64
+      num_workers: 4
+      resume: auto
+
+  mobilenet_v2:
+    output_dir: runs/mobilenet_v2
+    transforms:
+      train:
+        ensure_rgb: true
+        train_random_resized_crop: true
+        train_random_horizontal_flip: true
+        train_color_jitter: true
+      eval:
+        ensure_rgb: true
+        val_resize: true
+        val_center_crop: true
+    training:
+      epochs: 50
+      batch_size: 64
+      num_workers: 4
+      resume: auto
+
+  googlenet:
+    output_dir: runs/googlenet
+    transforms:
+      train:
+        ensure_rgb: true
+        train_random_resized_crop: true
+        train_random_horizontal_flip: true
+        train_color_jitter: true
+      eval:
+        ensure_rgb: true
+        val_resize: true
+        val_center_crop: true
+    training:
+      epochs: 50
+      batch_size: 64
+      num_workers: 4
+      resume: auto
+
+  densenet121:
+    output_dir: runs/densenet121
+    transforms:
+      train:
+        ensure_rgb: true
+        train_random_resized_crop: true
+        train_random_horizontal_flip: true
+        train_color_jitter: true
+      eval:
+        ensure_rgb: true
+        val_resize: true
+        val_center_crop: true
+    training:
+      epochs: 50
+      batch_size: 64
+      num_workers: 4
+      resume: auto
+
+selection:
+  # - simple_cnn
+  # - resnet18
+  - mobilenet_v2
+  - googlenet
+  # - densenet121
+

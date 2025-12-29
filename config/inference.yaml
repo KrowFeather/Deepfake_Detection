@@ -1,0 +1,55 @@
+seed: 1
+device: cuda
+
+data:
+  root: /home/tjj/nas/dataset/biggan/data_big
+  test_split: test
+  val_split: val
+  num_classes: 2
+  img_size: 224
+
+models:
+  efficientnet_b3:
+    output_dir: runs/efficientnet_b3
+    transforms:
+      eval:
+        ensure_rgb: true
+        val_resize: true
+        val_center_crop: true
+    inference:
+      weights: /home/tjj/tmp/projects/DeepfakeDetection/runs/efficientnet_b3/20251225-214157/EfficientNetModel.pth
+      split: test
+      batch_size: 256
+      num_workers: 2
+      img_size: 224
+  efficientformerv2_s1:
+    output_dir: runs/efficientformerv2_s1
+    transforms:
+      eval:
+        ensure_rgb: true
+        val_resize: true
+        val_center_crop: true
+    inference:
+      weights: /home/tjj/tmp/projects/DeepfakeDetection/runs/efficientformerv2_s1/20251225-214928/EfficientFormerV2_S1.pth
+      split: test
+      batch_size: 256
+      num_workers: 4
+      img_size: 224
+  faster_vit_2_224:
+    output_dir: runs/faster_vit_2_224
+    transforms:
+      eval:
+        ensure_rgb: true
+        val_resize: true
+        val_center_crop: true
+    inference:
+      weights: /home/tjj/tmp/projects/DeepfakeDetection/runs/faster_vit_2_224/20251225-215903/FasterVitModel.pth
+      split: test
+      batch_size: 256
+      num_workers: 4
+      img_size: 224
+
+selection:
+  - efficientnet_b3
+  - efficientformerv2_s1
+  - faster_vit_2_224

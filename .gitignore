@@ -1,0 +1,16 @@
+# Ignore data directory
+data/
+
+# Ignore virtual environment
+venv/
+
+# Ignore weights
+*.pth
+*.ckpt
+
+# Ignore outputs 
+outputs/
+runs/
+
+# Ignore compiled Python files
+*.pyc

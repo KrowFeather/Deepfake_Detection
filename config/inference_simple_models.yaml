@@ -1,0 +1,98 @@
+seed: 1
+device: cuda:7
+
+data:
+  root: /home/tjj/nas/dataset/biggan/data_big
+  test_split: test
+  val_split: val
+  num_classes: 2
+  img_size: 224
+
+models:
+  simple_cnn:
+    output_dir: runs/simple_cnn
+    transforms:
+      eval:
+        ensure_rgb: true
+        val_resize: true
+        val_center_crop: true
+    inference:
+      # 训练完成后，权重文件会保存在 runs/simple_cnn/<timestamp>/SimpleCNNModel.pth
+      # 请根据实际训练结果更新路径
+      weights: runs/simple_cnn/20251226-024229/SimpleCNNModel.pth
+      split: test
+      batch_size: 256
+      num_workers: 4
+      img_size: 224
+
+  resnet18:
+    output_dir: runs/resnet18
+    transforms:
+      eval:
+        ensure_rgb: true
+        val_resize: true
+        val_center_crop: true
+    inference:
+      # 训练完成后，权重文件会保存在 runs/resnet18/<timestamp>/ResNet18Model.pth
+      # 请根据实际训练结果更新路径
+      weights: runs/resnet18/20251226-024642/ResNet18Model.pth
+      split: test
+      batch_size: 256
+      num_workers: 4
+      img_size: 224
+
+  mobilenet_v2:
+    output_dir: runs/mobilenet_v2
+    transforms:
+      eval:
+        ensure_rgb: true
+        val_resize: true
+        val_center_crop: true
+    inference:
+      # 训练完成后，权重文件会保存在 runs/mobilenet_v2/<timestamp>/MobileNetV2Model.pth
+      # 请根据实际训练结果更新路径
+      weights: runs/mobilenet_v2/20251226-034657/MobileNetV2Model.pth
+      split: test
+      batch_size: 256
+      num_workers: 4
+      img_size: 224
+
+  googlenet:
+    output_dir: runs/googlenet
+    transforms:
+      eval:
+        ensure_rgb: true
+        val_resize: true
+        val_center_crop: true
+    inference:
+      # 训练完成后，权重文件会保存在 runs/googlenet/<timestamp>/GoogLeNetModel.pth
+      # 请根据实际训练结果更新路径
+      weights: runs/googlenet/20251226-035135/GoogLeNetModel.pth
+      split: test
+      batch_size: 256
+      num_workers: 4
+      img_size: 224
+
+  densenet121:
+    output_dir: runs/densenet121
+    transforms:
+      eval:
+        ensure_rgb: true
+        val_resize: true
+        val_center_crop: true
+    inference:
+      # 训练完成后，权重文件会保存在 runs/densenet121/<timestamp>/DenseNet121Model.pth
+      # 请根据实际训练结果更新路径
+      weights: runs/densenet121/20251226-030113/DenseNet121Model.pth
+      split: test
+      batch_size: 256
+      num_workers: 4
+      img_size: 224
+
+selection:
+  # - simple_cnn
+  # - resnet18
+  - mobilenet_v2
+  - googlenet
+  # - densenet121
+
